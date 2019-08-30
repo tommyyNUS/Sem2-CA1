@@ -17,6 +17,7 @@ from sklearn.pipeline import make_pipeline
 def backwardElimination(x, Y, sl, columns):
     numVars = len(columns.columns)
     numVars2 = len(columns.columns)
+    print("\nStarting backward elimination...")
     for i in range(0, numVars):
         regressor_OLS = sm.OLS(endog = Y.astype(float), exog = columns.astype(float)).fit()
         maxVar = float(max(regressor_OLS.pvalues))
