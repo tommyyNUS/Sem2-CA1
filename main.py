@@ -1,4 +1,4 @@
-# (0) import Packages
+# 1) import Packages
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import pandas as pd 
@@ -10,18 +10,37 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score, mean_absolute_error, median_absolute_error, accuracy_score
 from math import sqrt
+import statsmodels.regression.linear_model as sm
+from sklearn.pipeline import make_pipeline
 
-#Define functions
+# 2) Define functions
+def backwardElimination(x, Y, sl, columns):
+    numVars = len(columns.columns)
+    numVars2 = len(columns.columns)
+    for i in range(0, numVars):
+        regressor_OLS = sm.OLS(endog = Y.astype(float), exog = columns.astype(float)).fit()
+        maxVar = float(max(regressor_OLS.pvalues))
+        print("Highest P value is: "+str(maxVar))
+        if maxVar > sl:
+            for j in range(0, numVars2):
+                if (regressor_OLS.pvalues[j].astype(float) == maxVar):
+                    print("Removing column "+str(j))
+                    columns = columns.drop(columns.columns[j], axis=1)
+                    numVars2 -= 1
+        
+    print(regressor_OLS.summary())
+    return columns
 
+#----------------------Start of code implemention -------------------------------
 data = pd.read_csv('Detail_listings.csv')
 
-#Generate Summary Statistics
+# 3) Generate Summary Statistics
 print("-----------------------")
 print("Data Dimensions:  ", data.shape)
 sumry = data.describe().transpose()
 print("Summary Statistics:\n",sumry,'\n')
 
-#Remove irrelevant columns
+# 4) Remove irrelevant columns
 data = data.drop(['id', 'listing_url', 'scrape_id', 'last_scraped', 'name', 'summary', 'space',
             'description', 'experiences_offered', 'neighborhood_overview', 'notes', 
             'transit', 'access', 'interaction', 'house_rules', 'thumbnail_url',
@@ -35,78 +54,64 @@ data = data.drop(['id', 'listing_url', 'scrape_id', 'last_scraped', 'name', 'sum
             'weekly_price', 'monthly_price', 'security_deposit', 'cleaning_fee',
             'calendar_updated', 'has_availability', 'calendar_last_scraped', 'first_review',
             'last_review', 'requires_license', 'license', 'jurisdiction_names',
-            'maximum_nights', 'city', 'host_response_rate', 'property_type',
+            'maximum_nights', 'host_response_rate',
             'number_of_reviews', 'review_scores_communication', 'host_total_listings_count',
-            'host_listings_count', 'bed_type', 'host_has_profile_pic', 'review_scores_accuracy',
-            'minimum_nights'], axis = 1)
+            'host_listings_count', 'bed_type', 'city'], axis = 1)
 
-#Handle missing data
+# 5) Handle missing data
 data[data.isnull().any(axis=1)]
 data = data.dropna()
 data = data.replace(to_replace="[$,%]", value='', regex=True)
 
-#Set independant and dependant variables
+# 6) Shuffle the data
+data = data.sample(frac=1)
+
+# 7) Set independant and dependant variables
 X = data.drop("price", axis = 1)
-Y = data.iloc[:, 8].values
+Y = data['price']
 Y = pd.to_numeric(Y)
 
-#Encode Categorical data
+# 8) Encode Categorical data
 from sklearn.preprocessing import LabelEncoder
 le = LabelEncoder()
 X[['host_response_time']]= le.fit_transform(X[['host_response_time']].astype(str))
 X[['room_type']]= le.fit_transform(X[['room_type']].astype(str))
-#X[['bed_type']]= le.fit_transform(X[['bed_type']].astype(str))
 X[['cancellation_policy']]= le.fit_transform(X[['cancellation_policy']].astype(str))
 
-#One hot encode categories
+# 9) One hot encode categories
 X = pd.concat([X, pd.get_dummies(X['host_is_superhost'], prefix='host_is_superhost')],axis=1)
-#X = pd.concat([X, pd.get_dummies(X['host_has_profile_pic'], prefix='host_has_profile_pic')],axis=1)
+X = pd.concat([X, pd.get_dummies(X['host_has_profile_pic'], prefix='host_has_profile_pic')],axis=1)
 X = pd.concat([X, pd.get_dummies(X['host_identity_verified'], prefix='host_identity_verified')],axis=1)
-#X = pd.concat([X, pd.get_dummies(X['city'], prefix='city')],axis=1)
-#X = pd.concat([X, pd.get_dummies(X['property_type'], prefix='property_type')],axis=1)
+X = pd.concat([X, pd.get_dummies(X['property_type'], prefix='property_type')],axis=1)
 X = pd.concat([X, pd.get_dummies(X['instant_bookable'], prefix='instant_bookable')],axis=1)
 X = pd.concat([X, pd.get_dummies(X['require_guest_profile_picture'], prefix='require_guest_profile_picture')],axis=1)
 X = pd.concat([X, pd.get_dummies(X['require_guest_phone_verification'], prefix='require_guest_phone_verification')],axis=1)
 
 X.drop(['host_is_superhost'], axis=1, inplace=True)
-#X.drop(['host_has_profile_pic'], axis=1, inplace=True)
+X.drop(['host_has_profile_pic'], axis=1, inplace=True)
 X.drop(['host_identity_verified'], axis=1, inplace=True)
-#X.drop(['city'], axis=1, inplace=True)
-#X.drop(['property_type'], axis=1, inplace=True)
+X.drop(['property_type'], axis=1, inplace=True)
 X.drop(['instant_bookable'], axis=1, inplace=True)
 X.drop(['require_guest_profile_picture'], axis=1, inplace=True)
 X.drop(['require_guest_phone_verification'], axis=1, inplace=True)
 
-#Build optimal model using Backward elimination, SL = 0.05
-#Dropped columns: city, host_response_rate, property_type, number_of_reviews, review_scores_communication,
-#  host_total_listings_count, host_listings_count, availability, availability_90, availability_30
-# bed_type, host_has_profile_pic_f
-#import statsmodels.formula.api as sm
-import statsmodels.regression.linear_model as sm
+# 10) Build optimal model using Backward elimination
 col_one = pd.DataFrame(index = np.arange(31253), columns = np.arange(1))
 col_one[0] = 1
 X.insert(0, 'one', col_one)
 X_opt = X
-X_opt = X_opt.drop(['availability_90', 'availability_30'], axis = 1)
-regressor_OLS = sm.OLS(endog = Y.astype(float), exog = X_opt.astype(float)).fit()
-regressor_OLS.summary()
+SL = 0.000000001
+X_opt = backwardElimination(X, Y, SL, X_opt)
 
-#Splitting dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2, random_state = 0)
+# 11) Splitting dataset into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.1, random_state = 0)
 
-#Feature Scaling
+# 12) Feature Scaling
 sc = MinMaxScaler()
 x_train = sc.fit_transform(X_train)
 x_test = sc.transform(X_test)
 
-#Fitting Ridge linear regression model to dataset
-from sklearn.linear_model import Ridge
-lrid = Ridge(alpha=20.0).fit(X_train, y_train)
-
-#Fitting Ridge linear regression model to dataset
-from sklearn.linear_model import Lasso
-lasso = Lasso(alpha=2.0, max_iter=10000).fit(X_train, y_train)
-
+# 13) Train models
 #Fitting multiple linear regression model to dataset
 from sklearn.linear_model import LinearRegression
 regressor = LinearRegression()
@@ -114,12 +119,14 @@ regressor.fit(X_train, y_train)
 
 #Fitting polynomial regression model to the dataset
 from sklearn.preprocessing import PolynomialFeatures
-poly_reg = PolynomialFeatures(degree = 2)
-X_poly = poly_reg.fit_transform(X_train)
-X_poly_test = poly_reg.fit_transform(X_test)
-poly_reg.fit(X_poly, y_train)
-lin_reg_2 = LinearRegression()
-lin_reg_2.fit(X_poly, y_train)
+#poly_reg = PolynomialFeatures(degree = 2)
+#X_poly = poly_reg.fit_transform(X_train)
+#X_poly_test = poly_reg.fit(X_test)
+#poly_reg.fit(X_poly, y_train)
+#lin_reg_2 = LinearRegression()
+#lin_reg_2.fit(X_poly, y_train)
+poly_model = make_pipeline(PolynomialFeatures(2), LinearRegression())
+poly_model.fit(X, Y)
 
 #Fitting decision tree model to the dataset
 from sklearn.tree import DecisionTreeRegressor
@@ -128,50 +135,26 @@ tree_reg.fit(X_train, y_train)
 
 #Fitting random forest to the dataset. Ensemble Learning.
 from sklearn.ensemble import RandomForestRegressor
-rdm_reg = RandomForestRegressor(n_estimators = 100, random_state = 0)
+rdm_reg = RandomForestRegressor(n_estimators = 1, random_state = 0)
 rdm_reg.fit(X_train, y_train)
 
 #Applying grid search to find best parameters for random forest
-#from sklearn.model_selection import GridSearchCV
-#parameters = [{'n_estimators': [10,50,100,150,200,250,300]}]
-#grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
-#if __name__ == '__main__':
-#    grid_search = grid_search.fit(X_train, y_train)
+print("\nConducting grid search for random forest... This will take some time...")
+from sklearn.model_selection import GridSearchCV
+parameters = [{'n_estimators': [100,200,300]}]
+grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
+if __name__ == '__main__':
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    grid_search = grid_search.fit(X_train, y_train)
 
-#accuracy1 = grid_search.best_score_
-#best_params = grid_search.best_params_
-#nEstimators = grid_search.best_params_['n_estimators']
-#rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
-#rdm_reg.fit(X_train, y_train)
+best_params = grid_search.best_params_
+nEstimators = grid_search.best_params_['n_estimators']
+print("\nBest number of estimators for random forest: "+str(nEstimators))
+rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
+print("\nTraining random forest...")
+rdm_reg.fit(X_train, y_train)
 
-#Predicting results with multiple linear model
-y_pred_rlin = lrid.predict(X_test)
-
-#Evaluating ridge linear model
-print("\nModel Summary (Ridge Linear Regression)")
-print("-----------------------------------------------")
-print("Explained Variance: "+str(explained_variance_score(y_test, y_pred_rlin)))
-print("Mean absolute sq error: "+str(mean_absolute_error(y_test, y_pred_rlin)))
-print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_rlin))))
-print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_rlin)))
-print("Ridge score (Train): "+str(lrid.score(X_train, y_train)))
-print("Ridge score (Test): "+str(lrid.score(X_test, y_test)))
-print("Model Intercept: "+str(lrid.intercept_))
-
-#Predicting results with multiple linear model
-y_pred_las = lasso.predict(X_test)
-
-#Evaluating lasso linear model
-print("\nModel Summary (Lasso Linear Regression)")
-print("-----------------------------------------------")
-print("Explained Variance: "+str(explained_variance_score(y_test, y_pred_rlin)))
-print("Mean absolute sq error: "+str(mean_absolute_error(y_test, y_pred_rlin)))
-print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_rlin))))
-print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_rlin)))
-print("Lasso score (Train): "+str(lasso.score(X_train, y_train)))
-print("Lasso score (Test): "+str(lasso.score(X_test, y_test)))
-print("Model Intercept: "+str(lasso.intercept_))
-
+# 14) Predict results
 #Predicting results with multiple linear model
 y_pred_mlin = regressor.predict(X_test)
 
@@ -184,10 +167,9 @@ print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_mlin))))
 print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_mlin)))
 print("Multiple Linear score (Train): "+str(regressor.score(X_train, y_train)))
 print("Multiple Linear score (Test): "+str(regressor.score(X_test, y_test)))
-print("Model Intercept: "+str(regressor.intercept_))
 
 #Predicting results with polynomial regression model
-y_pred_poly = lin_reg_2.predict(X_poly_test)
+y_pred_poly = poly_model.predict(X_test)
 
 #Evaluating polynomial model
 print("\nModel Summary (Polynomial Regression)")
@@ -196,9 +178,9 @@ print("Explained Variance: "+str(explained_variance_score(y_test, y_pred_poly)))
 print("Mean absolute sq error: "+str(mean_absolute_error(y_test, y_pred_poly)))
 print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_poly))))
 print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_poly)))
-print("Polynomial Linear score (Train): "+str(lin_reg_2.score(X_poly, y_train)))
-print("Polynomial Linear score (Test): "+str(lin_reg_2.score(X_poly_test, y_test)))
-print("Model Intercept: "+str(lin_reg_2.intercept_))
+print("Polynomial Linear score (Train): "+str(poly_model.score(X_train, y_train)))
+print("Polynomial Linear score (Test): "+str(poly_model.score(X_test, y_test)))
+
 
 #Predicting results with decision tree model
 y_pred_dtree = tree_reg.predict(X_test)
@@ -224,30 +206,46 @@ print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_dtree)))
 print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_dtree)))
 print("R2 score: "+str(r2_score(y_test, y_pred_rtree)))
 
-#Visualizing Polynomial Results
-#plt.scatter(X_test['accommodates'], y_test, color = 'red')
-#plt.plot(X_test['accommodates'], y_pred_mlin, color = 'blue')
-#plt.title('Polynomial Regression')
-#plt.xlabel('Number of bedrooms')
-#plt.ylabel('Salary')
-#plt.show()
-
+# 15) Visualizing Results
+#--- Multiple Linear model ---
 fig, ax = plt.subplots()
 ax.scatter(y_test, y_pred_mlin)
 ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-ax.set_xlabel('measured')
+ax.set_xlabel('actual')
 ax.set_ylabel('predicted')
+plt.title("Multiple Linear Regression")
+plt.show()
+
+#--- Polynomial model ---
+fig, ax = plt.subplots()
+ax.scatter(y_test, y_pred_poly)
+ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax.set_xlabel('actual')
+ax.set_ylabel('predicted')
+plt.title("Polynomial Regression")
+plt.show()
+
+#--- Decision Tree model ---
+fig, ax = plt.subplots()
+ax.scatter(y_test, y_pred_dtree)
+ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax.set_xlabel('actual')
+ax.set_ylabel('predicted')
+plt.title("Decision Tree Regression")
+plt.show()
+
+#--- Random Forest model ---
+fig, ax = plt.subplots()
+ax.scatter(y_test, y_pred_rtree)
+ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax.set_xlabel('actual')
+ax.set_ylabel('predicted')
+plt.title("Random Forest")
 plt.show()
 
 import seaborn as sns
-ax1 = sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-sns.distplot(y_pred_mlin, hist=False, color='b', label='Fitted Values', ax = ax1)
-
-#ax1 = sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-#sns.distplot(y_pred_poly, hist=False, color='b', label='Fitted Values', ax = ax1)
-
-#ax1 = sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-#sns.distplot(y_pred_dtree, hist=False, color='b', label='Fitted Values', ax = ax1)
-
-#ax1 = sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-#sns.distplot(y_pred_rtree, hist=False, color='b', label='Fitted Values', ax = ax1)
+sns.distplot(y_test, hist=False, color='r', label='Actual Value')
+sns.distplot(y_pred_mlin, hist=False, color='b', label='Multiple Linear')
+sns.distplot(y_pred_poly, hist=False, color='g', label='Polynomial')
+sns.distplot(y_pred_dtree, hist=False, color='y', label='Decision Tree')
+sns.distplot(y_pred_rtree, hist=False, color='m', label='Random Forest')
