@@ -105,7 +105,7 @@ SL = 0.000000001
 X_opt = backwardElimination(X, Y, SL, X_opt)
 
 # 11) Splitting dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.1, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.05, random_state = 0)
 
 # 12) Feature Scaling
 sc = MinMaxScaler()
@@ -120,12 +120,6 @@ regressor.fit(X_train, y_train)
 
 #Fitting polynomial regression model to the dataset
 from sklearn.preprocessing import PolynomialFeatures
-#poly_reg = PolynomialFeatures(degree = 2)
-#X_poly = poly_reg.fit_transform(X_train)
-#X_poly_test = poly_reg.fit(X_test)
-#poly_reg.fit(X_poly, y_train)
-#lin_reg_2 = LinearRegression()
-#lin_reg_2.fit(X_poly, y_train)
 poly_model = make_pipeline(PolynomialFeatures(2), LinearRegression())
 poly_model.fit(X, Y)
 
@@ -152,6 +146,7 @@ best_params = grid_search.best_params_
 nEstimators = grid_search.best_params_['n_estimators']
 print("\nBest number of estimators for random forest: "+str(nEstimators))
 rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
+#rdm_reg = RandomForestRegressor(n_estimators = 200, random_state = 0)
 print("\nTraining random forest...")
 rdm_reg.fit(X_train, y_train)
 
@@ -247,6 +242,16 @@ plt.show()
 import seaborn as sns
 sns.distplot(y_test, hist=False, color='r', label='Actual Value')
 sns.distplot(y_pred_mlin, hist=False, color='b', label='Multiple Linear')
+plt.show()
+
+sns.distplot(y_test, hist=False, color='r', label='Actual Value')
 sns.distplot(y_pred_poly, hist=False, color='g', label='Polynomial')
+plt.show()
+
+sns.distplot(y_test, hist=False, color='r', label='Actual Value')
 sns.distplot(y_pred_dtree, hist=False, color='y', label='Decision Tree')
+plt.show()
+
+sns.distplot(y_test, hist=False, color='r', label='Actual Value')
 sns.distplot(y_pred_rtree, hist=False, color='m', label='Random Forest')
+plt.show()
