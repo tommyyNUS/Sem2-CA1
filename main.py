@@ -137,16 +137,16 @@ rdm_reg.fit(X_train, y_train)
 print("\nConducting grid search for random forest... This will take some time...")
 from sklearn.model_selection import GridSearchCV
 parameters = [{'n_estimators': [100,200,300]}]
-grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
-if __name__ == '__main__':
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-    grid_search = grid_search.fit(X_train, y_train)
+#grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
+#if __name__ == '__main__':
+#    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+#    grid_search = grid_search.fit(X_train, y_train)
 
-best_params = grid_search.best_params_
-nEstimators = grid_search.best_params_['n_estimators']
-print("\nBest number of estimators for random forest: "+str(nEstimators))
-rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
-#rdm_reg = RandomForestRegressor(n_estimators = 200, random_state = 0)
+#best_params = grid_search.best_params_
+#nEstimators = grid_search.best_params_['n_estimators']
+#print("\nBest number of estimators for random forest: "+str(nEstimators))
+#rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
+rdm_reg = RandomForestRegressor(n_estimators = 100, random_state = 0)
 print("\nTraining random forest...")
 rdm_reg.fit(X_train, y_train)
 
@@ -203,55 +203,107 @@ print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_dtree))
 print("R2 score: "+str(r2_score(y_test, y_pred_rtree)))
 
 # 15) Visualizing Results
+
+#Consolidate actual Y values and predictions into 1 dataframe and display head(Top 30 rows)
+y_values = pd.DataFrame()
+y_values['Actual'] = y_test
+y_values['Multiple Linear'] = y_pred_mlin
+y_values['Polynomial'] = y_pred_poly
+y_values['Decision Tree'] = y_pred_dtree
+y_values['Random Forest'] = y_pred_rtree
+print('\n---------- Actual VS All Prediction Values Comparison ----------\n')
+print(y_values.head(n=30))
+
 #--- Multiple Linear model ---
-fig, ax = plt.subplots()
-ax.scatter(y_test, y_pred_mlin)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-ax.set_xlabel('actual')
-ax.set_ylabel('predicted')
-plt.title("Multiple Linear Regression")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+
+ax[0].scatter(y_test, y_pred_mlin)
+ax[0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[0].set_xlabel('actual')
+ax[0].set_ylabel('predicted')
+ax[0].set_title("Multiple Linear Regression")
+
+ax[1].scatter(y_test, y_pred_mlin)
+ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[1].set_xlabel('actual')
+ax[1].set_ylabel('predicted')
+ax[1].set_xlim([0,1000])
+ax[1].set_ylim([0,1000])
+ax[1].set_title("Multiple Linear Regression (Zoomed In)")
+
 plt.show()
 
 #--- Polynomial model ---
-fig, ax = plt.subplots()
-ax.scatter(y_test, y_pred_poly)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-ax.set_xlabel('actual')
-ax.set_ylabel('predicted')
-plt.title("Polynomial Regression")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+ax[0].scatter(y_test, y_pred_poly)
+ax[0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[0].set_xlabel('actual')
+ax[0].set_ylabel('predicted')
+ax[0].set_title("Polynomial Regression")
+
+ax[1].scatter(y_test, y_pred_poly)
+ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[1].set_xlabel('actual')
+ax[1].set_ylabel('predicted')
+ax[1].set_xlim([0,1000])
+ax[1].set_ylim([0,1000])
+ax[1].set_title("Polynomial Regression (Zoomed In)")
+
 plt.show()
 
 #--- Decision Tree model ---
-fig, ax = plt.subplots()
-ax.scatter(y_test, y_pred_dtree)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-ax.set_xlabel('actual')
-ax.set_ylabel('predicted')
-plt.title("Decision Tree Regression")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+ax[0].scatter(y_test, y_pred_dtree)
+ax[0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[0].set_xlabel('actual')
+ax[0].set_ylabel('predicted')
+ax[0].set_title("Decision Tree Regression")
+
+ax[1].scatter(y_test, y_pred_dtree)
+ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[1].set_xlabel('actual')
+ax[1].set_ylabel('predicted')
+ax[1].set_xlim([0,1000])
+ax[1].set_ylim([0,1000])
+ax[1].set_title("Decision Tree Regression (Zoomed In)")
+
 plt.show()
 
 #--- Random Forest model ---
-fig, ax = plt.subplots()
-ax.scatter(y_test, y_pred_rtree)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-ax.set_xlabel('actual')
-ax.set_ylabel('predicted')
-plt.title("Random Forest")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+ax[0].scatter(y_test, y_pred_rtree)
+ax[0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[0].set_xlabel('actual')
+ax[0].set_ylabel('predicted')
+ax[0].set_title("Random Forest Regression")
+
+ax[1].scatter(y_test, y_pred_rtree)
+ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+ax[1].set_xlabel('actual')
+ax[1].set_ylabel('predicted')
+ax[1].set_xlim([0,1000])
+ax[1].set_ylim([0,1000])
+ax[1].set_title("Random Forest Regression (Zoomed In)")
+
 plt.show()
 
 import seaborn as sns
 sns.distplot(y_test, hist=False, color='r', label='Actual Value')
 sns.distplot(y_pred_mlin, hist=False, color='b', label='Multiple Linear')
+plt.title('Multiple Linear Regression')
 plt.show()
 
 sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-sns.distplot(y_pred_poly, hist=False, color='g', label='Polynomial')
+sns.distplot(y_pred_poly, hist=False, color='b', label='Polynomial')
+plt.title('Polynomial Regression')
 plt.show()
 
 sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-sns.distplot(y_pred_dtree, hist=False, color='y', label='Decision Tree')
+sns.distplot(y_pred_dtree, hist=False, color='b', label='Decision Tree')
+plt.title('Decision Tree Regression')
 plt.show()
 
 sns.distplot(y_test, hist=False, color='r', label='Actual Value')
-sns.distplot(y_pred_rtree, hist=False, color='m', label='Random Forest')
+sns.distplot(y_pred_rtree, hist=False, color='b', label='Random Forest')
+plt.title('Random Forest Regression')
 plt.show()
