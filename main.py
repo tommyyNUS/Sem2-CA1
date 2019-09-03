@@ -137,16 +137,16 @@ rdm_reg.fit(X_train, y_train)
 print("\nConducting grid search for random forest... This will take some time...")
 from sklearn.model_selection import GridSearchCV
 parameters = [{'n_estimators': [100,200,300]}]
-#grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
-#if __name__ == '__main__':
-#    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-#    grid_search = grid_search.fit(X_train, y_train)
+grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
+if __name__ == '__main__':
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    grid_search = grid_search.fit(X_train, y_train)
 
-#best_params = grid_search.best_params_
-#nEstimators = grid_search.best_params_['n_estimators']
-#print("\nBest number of estimators for random forest: "+str(nEstimators))
-#rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
-rdm_reg = RandomForestRegressor(n_estimators = 100, random_state = 0)
+best_params = grid_search.best_params_
+nEstimators = grid_search.best_params_['n_estimators']
+print("\nBest number of estimators for random forest: "+str(nEstimators))
+rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
+#rdm_reg = RandomForestRegressor(n_estimators = 100, random_state = 0)
 print("\nTraining random forest...")
 rdm_reg.fit(X_train, y_train)
 
