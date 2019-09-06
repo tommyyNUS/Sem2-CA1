@@ -105,7 +105,7 @@ SL = 0.000000001
 X_opt = backwardElimination(X, Y, SL, X_opt)
 
 # 11) Splitting dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.05, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.01, random_state = 0)
 
 # 12) Feature Scaling
 sc = MinMaxScaler()
@@ -131,12 +131,12 @@ tree_reg.fit(X_train, y_train)
 #Fitting random forest to the dataset. Ensemble Learning.
 from sklearn.ensemble import RandomForestRegressor
 rdm_reg = RandomForestRegressor(n_estimators = 1, random_state = 0)
-rdm_reg.fit(X_train, y_train)
+#rdm_reg.fit(X_train, y_train)
 
 #Applying grid search to find best parameters for random forest
 print("\nConducting grid search for random forest... This will take some time...")
 from sklearn.model_selection import GridSearchCV
-parameters = [{'n_estimators': [100,200,300]}]
+parameters = [{'n_estimators': [50,100,150,200,250,300]}]
 grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
 if __name__ == '__main__':
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
@@ -161,8 +161,7 @@ print("Explained Variance: "+str(explained_variance_score(y_test, y_pred_mlin)))
 print("Mean absolute sq error: "+str(mean_absolute_error(y_test, y_pred_mlin)))
 print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_mlin))))
 print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_mlin)))
-print("Multiple Linear score (Train): "+str(regressor.score(X_train, y_train)))
-print("Multiple Linear score (Test): "+str(regressor.score(X_test, y_test)))
+print("R2 score: "+str(r2_score(y_test, y_pred_mlin)))
 
 #Predicting results with polynomial regression model
 y_pred_poly = poly_model.predict(X_test)
@@ -174,9 +173,7 @@ print("Explained Variance: "+str(explained_variance_score(y_test, y_pred_poly)))
 print("Mean absolute sq error: "+str(mean_absolute_error(y_test, y_pred_poly)))
 print("Root mean sq error: "+str(sqrt(mean_squared_error(y_test, y_pred_poly))))
 print("Median absolute error: "+str(median_absolute_error(y_test, y_pred_poly)))
-print("Polynomial Linear score (Train): "+str(poly_model.score(X_train, y_train)))
-print("Polynomial Linear score (Test): "+str(poly_model.score(X_test, y_test)))
-
+print("R2 score: "+str(r2_score(y_test, y_pred_poly)))
 
 #Predicting results with decision tree model
 y_pred_dtree = tree_reg.predict(X_test)
