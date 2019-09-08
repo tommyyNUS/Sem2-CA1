@@ -101,11 +101,11 @@ col_one = pd.DataFrame(index = np.arange(31253), columns = np.arange(1))
 col_one[0] = 1
 X.insert(0, 'one', col_one)
 X_opt = X
-SL = 0.000000001
+SL = 0.05
 X_opt = backwardElimination(X, Y, SL, X_opt)
 
 # 11) Splitting dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.01, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.05, random_state = 0)
 
 # 12) Feature Scaling
 sc = MinMaxScaler()
@@ -130,24 +130,33 @@ tree_reg.fit(X_train, y_train)
 
 #Fitting random forest to the dataset. Ensemble Learning.
 from sklearn.ensemble import RandomForestRegressor
-rdm_reg = RandomForestRegressor(n_estimators = 1, random_state = 0)
+rdm_reg = RandomForestRegressor()
 #rdm_reg.fit(X_train, y_train)
 
 #Applying grid search to find best parameters for random forest
 print("\nConducting grid search for random forest... This will take some time...")
 from sklearn.model_selection import GridSearchCV
-parameters = [{'n_estimators': [50,100,150,200,250,300]}]
-grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=2)
+parameters = { 'n_estimators': [900,1000,1100],
+                'min_samples_split' : [8,10,12],
+                'min_samples_leaf' : [3,4,5],
+                'max_depth' : [90,100,110,120]}
+
+grid_search = GridSearchCV(estimator=rdm_reg, param_grid = parameters, scoring='neg_mean_squared_error', cv = 10, n_jobs=-1, verbose=2)
 if __name__ == '__main__':
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    print("Fitting data to grid search...")
     grid_search = grid_search.fit(X_train, y_train)
-
+    
 best_params = grid_search.best_params_
 nEstimators = grid_search.best_params_['n_estimators']
+nSplit = grid_search.best_params_['min_samples_split']
+nLeaf = grid_search.best_params_['min_samples_leaf']
+nDepth = grid_search.best_params_['max_depth']
+
 print("\nBest number of estimators for random forest: "+str(nEstimators))
-rdm_reg = RandomForestRegressor(n_estimators = nEstimators, random_state = 0)
-#rdm_reg = RandomForestRegressor(n_estimators = 100, random_state = 0)
-print("\nTraining random forest...")
+rdm_reg = RandomForestRegressor(n_estimators = nEstimators, min_samples_split = nSplit, min_samples_leaf = nLeaf, max_depth = nDepth ,random_state = 0)
+#rdm_reg = RandomForestRegressor(n_estimators = 1000, random_state = 0)
+print("\nTraining random forest... This will take some time...")
 rdm_reg.fit(X_train, y_train)
 
 # 14) Predict results
@@ -220,8 +229,8 @@ ax[1].scatter(y_test, y_pred_mlin)
 ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
 ax[1].set_xlabel('actual')
 ax[1].set_ylabel('predicted')
-ax[1].set_xlim([0,1000])
-ax[1].set_ylim([0,1000])
+ax[1].set_xlim([0,y_test.max()/2])
+ax[1].set_ylim([0,y_test.max()/2])
 ax[1].set_title("Multiple Linear Regression (Zoomed In)")
 
 plt.show()
@@ -238,8 +247,8 @@ ax[1].scatter(y_test, y_pred_poly)
 ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
 ax[1].set_xlabel('actual')
 ax[1].set_ylabel('predicted')
-ax[1].set_xlim([0,1000])
-ax[1].set_ylim([0,1000])
+ax[1].set_xlim([0,y_test.max()/2])
+ax[1].set_ylim([0,y_test.max()/2])
 ax[1].set_title("Polynomial Regression (Zoomed In)")
 
 plt.show()
@@ -256,8 +265,8 @@ ax[1].scatter(y_test, y_pred_dtree)
 ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
 ax[1].set_xlabel('actual')
 ax[1].set_ylabel('predicted')
-ax[1].set_xlim([0,1000])
-ax[1].set_ylim([0,1000])
+ax[1].set_xlim([0,y_test.max()/2])
+ax[1].set_ylim([0,y_test.max()/2])
 ax[1].set_title("Decision Tree Regression (Zoomed In)")
 
 plt.show()
@@ -274,8 +283,8 @@ ax[1].scatter(y_test, y_pred_rtree)
 ax[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
 ax[1].set_xlabel('actual')
 ax[1].set_ylabel('predicted')
-ax[1].set_xlim([0,1000])
-ax[1].set_ylim([0,1000])
+ax[1].set_xlim([0,y_test.max()/2])
+ax[1].set_ylim([0,y_test.max()/2])
 ax[1].set_title("Random Forest Regression (Zoomed In)")
 
 plt.show()
