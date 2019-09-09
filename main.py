@@ -105,7 +105,7 @@ SL = 0.05
 X_opt = backwardElimination(X, Y, SL, X_opt)
 
 # 11) Splitting dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.05, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.1, random_state = 0)
 
 # 12) Feature Scaling
 sc = MinMaxScaler()
@@ -134,7 +134,7 @@ rdm_reg = RandomForestRegressor()
 #rdm_reg.fit(X_train, y_train)
 
 #Applying grid search to find best parameters for random forest
-print("\nConducting grid search for random forest... This will take some time...")
+print("\nConducting grid search for random forest... This will take some time... It can take approximately 6 hours...")
 from sklearn.model_selection import GridSearchCV
 parameters = { 'n_estimators': [900,1000,1100],
                 'min_samples_split' : [8,10,12],
@@ -153,9 +153,9 @@ nSplit = grid_search.best_params_['min_samples_split']
 nLeaf = grid_search.best_params_['min_samples_leaf']
 nDepth = grid_search.best_params_['max_depth']
 
-print("\nBest number of estimators for random forest: "+str(nEstimators))
+print("\nBest number of estimators for random forest: "+str(nEstimators)+", Depth: "+str(nDepth)+", Leaf: "+str(nLeaf)+", Split: "+str(nSplit))
 rdm_reg = RandomForestRegressor(n_estimators = nEstimators, min_samples_split = nSplit, min_samples_leaf = nLeaf, max_depth = nDepth ,random_state = 0)
-#rdm_reg = RandomForestRegressor(n_estimators = 1000, random_state = 0)
+#rdm_reg = RandomForestRegressor(n_estimators = 1000, min_samples_split = 8, min_samples_leaf = 3, max_depth = 100 ,random_state = 0)
 print("\nTraining random forest... This will take some time...")
 rdm_reg.fit(X_train, y_train)
 
